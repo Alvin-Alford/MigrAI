@@ -137,16 +137,18 @@ def tools():
     #Renders the "tools.html" page
     return render_template("tools.html")
 
+#Defining the help directory
 @app.route("/help")
 def help():
     #Renders the "help.html" page
     return render_template("help.html")
 
-
+#Defining the GET and POST request handle for the chat directoy
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
     if session.get("username"):
         if request.method == 'POST':
+            #Get the query part of POST
             query = request.form['query']
             #Returns AI answer
             return get_answer(query, session['username'])
@@ -157,7 +159,7 @@ def chat():
         #Redirects to Login page
         return redirect(url_for("login"))
 
-
+#Define the Login directory
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
