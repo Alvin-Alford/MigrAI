@@ -1,0 +1,33 @@
+{% extends 'header.html' %}
+
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MigrAI | help</title>
+    <style>
+       p {
+         margin: 15px;
+       }
+       form {
+         margin: 15px;
+       }
+       h2 {
+        margin: 15px;
+       }
+       a {
+           margin: 15px;
+         }
+    </style>
+</head>
+<body>
+    <h2>Help page</h2>
+    <p>Start by either logging in or signing.</p>
+    <p>If you are a new user, you can sign up here.</p><a href="{{ url_for('signup') }}">Signup</a>
+    <p>Then you can access the Tools here</p><a href="{{ url_for('tools') }}">Tools</a>
+</body>
+</html>
+{% include "footer.html" %}
+{% endblock %}
+

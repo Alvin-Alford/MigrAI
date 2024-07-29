@@ -1,0 +1,31 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %} Migrai</title>
+    <style>
+        nav a {
+            color: #000000;
+            font-size: 30px;
+            margin-left: 50px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Homepage</a>
+        <a href="/tools">Tools</a>
+        <a href="/help">Help</a>
+        {% if not session.get("username") %}
+        <a href="/login">Login</a>
+        {% endif %}
+        {% if session.get("username") %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+        {% endif %}
+    </nav>
+    <hr>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{% extends 'header.html' %}
+
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools | </title>
+    <style>
+      p {
+        margin: 15px;
+      }
+      form {
+        margin: 15px;
+      }
+      h2 {
+        margin: 15px;
+      }
+    </style>
+</head>
+<body>
+    <h2>Tools</h2>
+    <p><a href="{{ url_for('chat') }}">AI diagnoses tool/chat</a></p>
+    <p><a href="{{ url_for('help') }}">Help</a></p>
+</body>
+</html>
+{% include "footer.html" %}
+{% endblock %}
