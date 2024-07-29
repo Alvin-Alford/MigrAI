@@ -1,3 +1,4 @@
+#Importing the nessary libaries
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
@@ -21,6 +22,7 @@ from langchain_core.prompts import MessagesPlaceholder
 from datetime import timedelta, datetime
 import time
 
+#Setting environmental variables
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
@@ -34,9 +36,9 @@ app.secret_key = 'Yours'
 with open('Userdata/users.json', 'r') as file:
     users = json.load(file)
 
-#session = {}
 
 
+#Define function to read
 def updateWrite():
     with open("Userdata/users.json", "w") as f:
         f.write(json.dumps(users))
@@ -47,22 +49,26 @@ def updateRead():
         global users
         users = json.load(f)
 
-
+#Define chat history variable
 store = {}
 
+#Set the LLM
 llm = ChatOpenAI(model="gpt-4o", temperature=1, max_tokens=1000)
 
+#Load the document
 file_path = r"Data/data.pdf"
 loader = PyPDFLoader(file_path)
 docs = loader.load()
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,
-                                               chunk_overlap=200)
+#Split the document up intelligently
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
 splits = text_splitter.split_documents(docs)
-vectorstore = Chroma.from_documents(documents=splits,
-                                    embedding=OpenAIEmbeddings())
+
+#Create a vectorstore
+vectorstore = Chroma.from_documents(documents=splits,embedding=OpenAIEmbeddings())
 retriever = vectorstore.as_retriever()
 
+#Set system prompt number one (Chat history)
 contextualize_q_system_prompt = (
     "Given a chat history and the latest user question "
     "which might reference context in the chat history, "
@@ -75,9 +81,11 @@ contextualize_q_prompt = ChatPromptTemplate.from_messages([
     MessagesPlaceholder("chat_history"),
     ("human", "{input}"),
 ])
-history_aware_retriever = create_history_aware_retriever(
-    llm, retriever, contextualize_q_prompt)
 
+#Define the history aware retriever
+history_aware_retriever = create_history_aware_retriever(llm, retriever, contextualize_q_prompt)
+
+#System prompt number two (Normal)
 system_prompt = (
     "You are a tool for doctors to use to help diagnose migrain patients answer in full detail with explanations"
     "\n\n"
@@ -89,18 +97,17 @@ qa_prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
+#Define the RAG chain
 question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+rag_chain = create_retrieval_chain(history_aware_retriever,question_answer_chain)
 
-rag_chain = create_retrieval_chain(history_aware_retriever,
-                                   question_answer_chain)
-
-
+#Define session management for chat history
 def get_session_history(session_id: str) -> BaseChatMessageHistory:
     if session_id not in store:
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
-
+#Define call able RAG chain
 conversational_rag_chain = RunnableWithMessageHistory(
     rag_chain,
     get_session_history,
@@ -109,7 +116,7 @@ conversational_rag_chain = RunnableWithMessageHistory(
     output_messages_key="answer",
 )
 
-
+#Define a function for ease access to the RAG
 def get_answer(question: str, session_id: str) -> str:
     response = conversational_rag_chain.invoke(
         {"input": question},
@@ -118,17 +125,21 @@ def get_answer(question: str, session_id: str) -> str:
         }})["answer"]
     return response
 
-
+#Defining the home directory of the API
 @app.route("/")
 def home():
+    #Renders the "home.html" page
     return render_template("home.html")
 
+#Defining the tools directory
 @app.route("/tools")
 def tools():
+    #Renders the "tools.html" page
     return render_template("tools.html")
 
 @app.route("/help")
 def help():
+    #Renders the "help.html" page
     return render_template("help.html")
 
 
@@ -137,10 +148,13 @@ def chat():
     if session.get("username"):
         if request.method == 'POST':
             query = request.form['query']
+            #Returns AI answer
             return get_answer(query, session['username'])
         else:
+            #Renders the "chat.html" page
             return render_template("chat.html")
     else:
+        #Redirects to Login page
         return redirect(url_for("login"))
 
 
@@ -163,6 +177,7 @@ def login():
                 if remember:
                     session.permanent = True
                 print(f"Session after setting username: {session}")
+                #Redirects to home page
                 return redirect(url_for('home'))
             else:
                 print("Incorrect password")
@@ -172,6 +187,7 @@ def login():
             flash('Invalid username or password')
 
     print(f"Current session after login attempt: {session}")
+    #Renders the "login.html" page
     return render_template('login.html')
 
 
@@ -190,15 +206,17 @@ def signup():
             users[username] = {'password': generate_password_hash(password)}
             flash('Signup successful, please login')
             updateWrite()
+            #Redirects to login page
             return redirect(url_for('login'))
-
+    #Renders the "signup.html" page
     return render_template('signup.html')
 
 
 @app.route("/logout")
 def logout():
     session["username"] = None
-    return redirect("/")
+    #Redirects to home page
+    return redirect(url_for('home'))
 
 
 if __name__ == "__main__":
